@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sumeet Khatri - Software / AI Engineer</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #050507;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --accent-color: #6366f1; /* Indigo */
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-hover: rgba(255, 255, 255, 0.07);
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            cursor: none; /* Custom cursor active */
+        }
+
+        /* --- 3D Background Canvas --- */
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* --- Layout & Container --- */
+        .container {
+            max-width: 1100px; /* Slightly wider for the grid */
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Custom Cursor --- */
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            transition: width 0.2s, height 0.2s, background 0.2s;
+            mix-blend-mode: difference;
+        }
+        .custom-cursor.active {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.1);
+            border-color: transparent;
+            backdrop-filter: blur(2px);
+        }
+
+        /* --- Typography Utilities --- */
+        h1, h2, h3, h4 {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.2s;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            padding: 120px 0 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .hero-profile {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .hero-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--glass-border);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero h2 {
+            font-family: var(--font-code);
+            font-size: 1.1rem;
+            color: var(--accent-color);
+            font-weight: 400;
+        }
+
+        .hero-summary {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+        }
+
+        .hero-links {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .hero-links a {
+            font-family: var(--font-code);
+            font-size: 0.9rem;
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 6px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(5px);
+            transition: all 0.2s;
+        }
+
+        .hero-links a:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        /* --- Sections --- */
+        section {
+            padding: 80px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        section h3::after {
+            content: '';
+            height: 1px;
+            flex: 1;
+            background: var(--glass-border);
+        }
+
+        /* --- Cards (The 3D/Glass Effect) --- */
+        .card, .goal-card, .imp-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 32px;
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover, .goal-card:hover, .imp-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
+            background: var(--card-hover);
+        }
+
+        /* --- Projects Grid --- */
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .project-thumb {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+        
+        .card:hover .project-thumb {
+            opacity: 1;
+        }
+
+        .card h4, .imp-card h4, .goal-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            color: #fff;
+        }
+
+        .card p, .imp-card p, .goal-card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .muted {
+            font-size: 0.85rem !important;
+            color: #666 !important;
+            font-family: var(--font-code);
+            margin-bottom: 12px !important;
+            display: block;
+            flex-grow: 0 !important;
+        }
+
+        /* --- Tags --- */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+            margin-top: auto; /* Push to bottom if card stretches */
+        }
+
+        .tags span {
+            font-family: var(--font-code);
+            font-size: 0.75rem;
+            color: var(--accent-color);
+            background: rgba(99, 102, 241, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .project-links a {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-right: 16px;
+            border-bottom: 1px solid transparent;
+        }
+        
+        .project-links a:hover {
+            border-bottom-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* --- Skills Section --- */
+        .skill-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .skill-grid div {
+            background: rgba(255,255,255,0.02);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .skill-grid strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--accent-color);
+            font-family: var(--font-code);
+        }
+
+        /* --- Certifications --- */
+        .cert-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .cert-item {
+            padding: 10px 16px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            transition: 0.2s;
+        }
+        
+        .cert-item:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: #fff;
+            color: #fff;
+        }
+
+        /* --- Navigation Dots --- */
+        .nav-dots {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .nav-dots button {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .nav-dots button.active {
+            background: var(--accent-color);
+            transform: scale(1.5);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .project-grid { grid-template-columns: 1fr; }
+            .nav-dots { display: none; }
+            .custom-cursor { display: none; }
+            body { cursor: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="custom-cursor"></div>
+
+    <div class="nav-dots"></div>
+
+    <div class="container">
+        <header class="hero">
+            <div class="hero-profile">
+                <img class="hero-photo" src="sumeet image.png" alt="Sumeet Khatri">
+                <div class="hero-text">
+                    <h1>Sumeet Khatri</h1>
+                    <h2>Software / AI Engineer (New Grad-2026)</h2>
+                </div>
+            </div>
+            <p class="hero-summary">
+                Strong C++ systems skills, Python backend experience, and hands-on ML infrastructure expertise.
+                Built high-performance systems, scalable retrieval pipelines, and optimized ML training workflows.
+            </p>
+            <div class="hero-links">
+                <a href="https://www.linkedin.com/in/khatri-sumeet/" target="_blank">LinkedIn</a>
+                <a href="https://github.com/sumeet1212khatri" target="_blank">GitHub</a>
+                <a href="https://leetcode.com/u/4lsoDfYfse/" target="_blank">LeetCode</a>
+                <a href="mailto:sumeetkhatri1771@gmail.com">Email</a>
+            </div>
+        </header>
+
+        <section class="future-goals">
+            <h3>Future Goals</h3>
+            <div class="goal-card">
+                <h4>Building RedOpsAI – The Future of Web Security</h4>
+                <p>Over the next six months, my goal is to build RedOpsAI, a SaaS platform that makes website security testing simple and effective. The platform will provide safe and transparent scans, showing live visual feedback of potential risks without causing any harm to the site.</p>
+                <div class="goal-links project-links">
+                    <a href="https://sumeet1212khatri.github.io/RedOpsAI-Autonomous-Pentesting-Agent/">Live Demo</a>
+                    <a href="https://github.com/sumeet1212khatri/RedOpsAI-Autonomous-Pentesting-Agent">Source Code</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="certifications">
+            <h3>Certifications</h3>
+            <div class="cert-list">
+                <div class="cert-item">Google DeepMind’s AI Research Badge</div>
+                <div class="cert-item">Google Generative AI Leader</div>
+                <div class="cert-item">PMI Generative AI for PMs</div>
+                <div class="cert-item">Data Structures & Algorithms in C++</div>
+                <div class="cert-item">CodeBasics ML Masterclass</div>
+                <div class="cert-item">Advanced Deep Learning</div>
+                <div class="cert-item">McKinsey Forward (Top 1%)</div>
+                <div class="cert-item">System Design (LLD/HLD)</div>
+            </div>
+        </section>
+
+        <section class="imp-project">
+            <h3>Flagship Project</h3>
+            <div class="imp-card">
+                <img class="project-thumb" src="SQL SLM.png" style="height: 200px; object-fit: contain; background: rgba(0,0,0,0.3);" alt="SQL SLM">
+                <div class="imp-content">
+                    <h4>Custom-Trained SQL Small Language Model (10M GPT)</h4>
+                    <p class="muted">09/2025 – 10/2025</p>
+                    <p>Architected and built a compact 10M-parameter GPT model from scratch in PyTorch. Implemented memory-efficient techniques like mixed-precision and gradient accumulation, reducing per-epoch data loading times by over 90%.</p>
+                    <div class="tags">
+                        <span>PyTorch</span>
+                        <span>Transformers</span>
+                        <span>Mixed-Precision</span>
+                        <span>10M Params</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/SQL-Injection-GPT" target="_blank">Source Code</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="last-experience">
+            <h3>Experience</h3>
+            <div class="project-grid">
+                <div class="card">
+                    <img class="project-thumb" src="deloitte-certificate.png" alt="Deloitte">
+                    <h4>Virtual Software Internship, Deloitte</h4>
+                    <p class="muted">Forage</p>
+                    <p>Debugged and refactored a 10k-line Python/SQL codebase. Added connection pooling and regression tests, reducing query failure rate by 40%.</p>
+                    <div class="tags">
+                        <span>Python</span>
+                        <span>SQL</span>
+                        <span>Debugging</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="AWS cert.png" alt="AWS">
+                    <h4>AWS APAC Solutions Architect</h4>
+                    <p class="muted">Forage | 10/2025 – 11/2025</p>
+                    <p>Designed a scalable Elastic Beanstalk architecture for a client experiencing growth. Translated technical architecture into cost-benefit analysis.</p>
+                    <div class="tags">
+                        <span>AWS</span>
+                        <span>Architecture</span>
+                        <span>Elastic Beanstalk</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="skills">
+            <h3>Technical Arsenal</h3>
+            <div class="skill-grid">
+                <div>
+                    <strong>Languages</strong>
+                    <p>C++, Python, SQL</p>
+                </div>
+                <div>
+                    <strong>Systems</strong>
+                    <p>Linux, Concurrency, Multithreading, TCP/IP</p>
+                </div>
+                <div>
+                    <strong>DevOps</strong>
+                    <p>Docker, Kafka, GitHub Actions, AWS (EC2)</p>
+                </div>
+                <div>
+                    <strong>Machine Learning</strong>
+                    <p>Supervised Learning (Regression, Classification), Unsupervised Learning, Ensemble Methods, Feature Engineering, Model Evaluation &amp; Tuning</p>
+                </div>
+                <div>
+                    <strong>Deep Learning &amp; GenAI</strong>
+                    <p>Transformers (Attention Mechanisms), CNNs, Sequence Models (RNN/LSTM), Transfer Learning, Fine-Tuning</p>
+                </div>
+                <div>
+                    <strong>Libraries &amp; Frameworks</strong>
+                    <p>PyTorch (Priority), Scikit-Learn, Matplotlib, Seaborn</p>
+                </div>
+                <div>
+                    <strong>AI Infrastructure</strong>
+                    <p>PyTorch, Transformers, QLoRA, vLLM, FAISS</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="projects">
+            <h3>Featured Projects</h3>
+            <div class="project-grid">
+                <div class="card">
+                    <img class="project-thumb" src="c++ order.png" alt="C++ Order Matching">
+                    <h4>C++ Order Matching Engine</h4>
+                    <p>Engineered a C++20 engine using std::map for O(log N) price management. Validated 100% correctness with GoogleTest.</p>
+                    <div class="tags">
+                        <span>C++20</span>
+                        <span>Systems</span>
+                        <span>GoogleTest</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/High-Performance-CPP-Order-Matching-Engine">View Code</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="RAG.png" alt="RAG System">
+                    <h4>ContextEngine: RAG System</h4>
+                    <p>Built a full RAG pipeline (BM25 + FAISS) boosting grounded accuracy (42%→71%). Optimized inference using vLLM.</p>
+                    <div class="tags">
+                        <span>RAG</span>
+                        <span>vLLM</span>
+                        <span>FAISS</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/ContextEngine-Production-Ready-RAG-System-with-Hybrid-Retrieval">View Code</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="KAFKA.png" alt="Kafka Pipeline">
+                    <h4>Real-Time Event Stream</h4>
+                    <p>Designed an event-driven pipeline for e-commerce data using asynchronous producers/consumers.</p>
+                    <div class="tags">
+                        <span>Kafka</span>
+                        <span>Docker</span>
+                        <span>Python</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/Real-Time-Event-Stream-Pipeline">View Code</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="FINE TUNNING.png" alt="Fine Tuning">
+                    <h4>Memory-Efficient Fine-Tuning</h4>
+                    <p>Implemented a QLoRa (4-bit) pipeline, reducing memory footprint by ~70% on a single T4 GPU.</p>
+                    <div class="tags">
+                        <span>QLoRa</span>
+                        <span>LLM</span>
+                        <span>PyTorch</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/Fine-Tuning-LLM-for-Specialized-Q-A-Bot">View Code</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="CODE BUDDY.png" alt="AI Coder Buddy">
+                    <h4>AI Coder Buddy</h4>
+                    <p>AI agent using LangChain that plans and generates multi-file applications, decreasing development cycle time by 30%.</p>
+                    <div class="tags">
+                        <span>LangChain</span>
+                        <span>Groq API</span>
+                        <span>AI Agents</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/AI-Coder-Buddy">GitHub</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="cerdit.png" alt="Credit Risk">
+                    <h4>Credit Risk Model</h4>
+                    <p>Developed interpretable ML models that improved prediction accuracy by 20% for NBFC clients.</p>
+                    <div class="tags">
+                        <span>Scikit-learn</span>
+                        <span>Streamlit</span>
+                        <span>MLOps</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/Credit-Risk-Modelling-Classification-">GitHub</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="toxic.png" alt="Toxic Message Detector">
+                    <h4>Toxic Message Detector</h4>
+                    <p>Trained a text classification model with TF-IDF on 100K+ comments, achieving 95% accuracy.</p>
+                    <div class="tags">
+                        <span>NLTK</span>
+                        <span>TF-IDF</span>
+                        <span>Pandas</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/Toxic-Comment-Classification-Web-App">GitHub</a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <img class="project-thumb" src="crew.png" alt="Multi-Modal Crew AI">
+                    <h4>Multi-Modal Crew AI</h4>
+                    <p>Designed a multi-agent framework that automates market research by 70% using specialized 'Researcher' and 'Writer' agents.</p>
+                    <div class="tags">
+                        <span>Gemini API</span>
+                        <span>LangChain</span>
+                        <span>Streamlit</span>
+                    </div>
+                    <div class="project-links">
+                        <a href="https://github.com/sumeet1212khatri/CrewAI-Multi-Agent-System-Prototype">GitHub</a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </div>
+
+    <script>
+        /* --- 1. Dynamic Navigation Dots --- */
+        (function(){
+            const sections = Array.from(document.querySelectorAll('main section, section'));
+            const dotsContainer = document.querySelector('.nav-dots');
+            
+            if(sections.length > 0 && dotsContainer) {
+                sections.forEach((sec, i) => {
+                    const btn = document.createElement('button');
+                    btn.setAttribute('aria-label', 'Go to section '+(i+1));
+                    btn.addEventListener('click', () => sec.scrollIntoView({behavior:'smooth'}));
+                    dotsContainer.appendChild(btn);
+                });
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if(entry.isIntersecting){
+                            const idx = sections.indexOf(entry.target);
+                            const buttons = Array.from(dotsContainer.children);
+                            buttons.forEach(b => b.classList.remove('active'));
+                            if(buttons[idx]) buttons[idx].classList.add('active');
+                        }
+                    });
+                }, {threshold: 0.3});
+
+                sections.forEach(s => observer.observe(s));
+            }
+        })();
+
+        /* --- 2. Custom Cursor Logic --- */
+        (function(){
+            const cursor = document.querySelector('.custom-cursor');
+            const links = document.querySelectorAll('a, button');
+            
+            document.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+
+            links.forEach(link => {
+                link.addEventListener('mouseenter', () => cursor.classList.add('active'));
+                link.addEventListener('mouseleave', () => cursor.classList.remove('active'));
+            });
+        })();
+
+        /* --- 3. Three.js 3D Starfield Background --- */
+        (function(){
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+
+            // Particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const count = 2000;
+            const posArray = new Float32Array(count * 3);
+
+            for(let i = 0; i < count * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 15; // Spread
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.02,
+                color: 0x6366f1, // Indigo accent
+                transparent: true,
+                opacity: 0.8,
+            });
+
+            const particlesMesh = new THREE.Points(particlesGeometry, material);
+            scene.add(particlesMesh);
+
+            camera.position.z = 3;
+
+            // Mouse Interaction
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (event) => {
+                mouseX = event.clientX / window.innerWidth - 0.5;
+                mouseY = event.clientY / window.innerHeight - 0.5;
+            });
+
+            const animate = () => {
+                requestAnimationFrame(animate);
+
+                // Subtle rotation
+                particlesMesh.rotation.y += 0.001;
+                particlesMesh.rotation.x += 0.0005;
+
+                // Mouse parallax
+                particlesMesh.rotation.x += mouseY * 0.05;
+                particlesMesh.rotation.y += mouseX * 0.05;
+
+                renderer.render(scene, camera);
+            };
+
+            animate();
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        })();
+    </script>
+</body>
+</html>
