@@ -2,668 +2,972 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sumeet Khatri - Software / AI Engineer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sumeet Khatri - 3D Interactive Planetary Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;600;700&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <style>
 :root {
-  --bg-color: #050507;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --accent-color: #6366f1;
-  --accent-glow: rgba(99, 102, 241, 0.3);
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --card-hover: rgba(255, 255, 255, 0.07);
+  --bg-dark: #05020c;
+  --text-primary: #f8fafc;
+  --text-secondary: #c084fc;
+  --text-muted: #94a3b8;
+  --accent-cyan: #00f2fe;
+  --accent-magenta: #d946ef;
+  --accent-purple: #8b5cf6;
+  --accent-orange: #ff7700;
+  --accent-emerald: #10b981;
+  --glow-cyan: rgba(0, 242, 254, 0.5);
+  --glow-magenta: rgba(217, 70, 239, 0.5);
+  --glass-bg: rgba(13, 8, 25, 0.82);
+  --glass-border: rgba(139, 92, 246, 0.35);
+  --card-bg: rgba(26, 17, 48, 0.65);
   --font-main: 'Inter', sans-serif;
   --font-code: 'JetBrains Mono', monospace;
+  --font-scifi: 'Orbitron', sans-serif;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
+
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 body {
-  background-color: var(--bg-color);
+  background-color: var(--bg-dark);
   color: var(--text-primary);
   font-family: var(--font-main);
-  line-height: 1.6;
-  overflow-x: hidden;
-  cursor: none;
+  overflow: hidden;
+  width: 100vw; height: 100vh;
+  position: relative;
+  cursor: crosshair;
 }
+
+/* 3D WebGL Canvas */
 #canvas-container {
-  position: fixed; top: 0; left: 0;
-  width: 100%; height: 100%;
-  z-index: -1; opacity: 0.6;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 1; pointer-events: auto;
 }
-.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
-.custom-cursor {
-  position: fixed; width: 20px; height: 20px;
-  border: 1px solid rgba(255,255,255,0.5);
-  border-radius: 50%; pointer-events: none;
-  transform: translate(-50%, -50%); z-index: 9999;
-  transition: width 0.2s, height 0.2s, background 0.2s;
-  mix-blend-mode: difference;
-}
-.custom-cursor.active {
-  width: 40px; height: 40px;
-  background: rgba(255,255,255,0.1);
-  border-color: transparent; backdrop-filter: blur(2px);
-}
-h1, h2, h3, h4 { font-weight: 800; letter-spacing: -0.02em; }
-a { text-decoration: none; color: inherit; transition: color 0.2s; }
 
-/* Hero */
-.hero {
-  padding: 120px 0 80px;
-  display: flex; flex-direction: column; gap: 24px;
-  border-bottom: 1px solid var(--glass-border);
+/* UI Title Bar in Space */
+.system-title-bar {
+  position: fixed; top: 24px; left: 30px; z-index: 10;
+  pointer-events: none;
+  display: flex; flex-direction: column; gap: 4px;
 }
-.hero-profile { display: flex; align-items: center; gap: 24px; }
-.hero-photo {
-  width: 100px; height: 100px; border-radius: 50%;
-  object-fit: cover; border: 2px solid var(--glass-border);
-  box-shadow: 0 0 20px var(--accent-glow);
-}
-.hero h1 {
-  font-size: 3.5rem; line-height: 1.1;
-  background: linear-gradient(to right, #fff, #94a3b8);
+.system-title-bar h1 {
+  font-family: var(--font-scifi); font-size: 1.6rem; letter-spacing: 2px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--accent-cyan) 50%, var(--accent-magenta) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 20px rgba(0, 242, 254, 0.3);
 }
-.hero h2 {
-  font-family: var(--font-code); font-size: 1.1rem;
-  color: var(--accent-color); font-weight: 400;
+.system-title-bar span {
+  font-family: var(--font-code); font-size: 0.82rem;
+  color: var(--accent-cyan); letter-spacing: 3px;
+  display: flex; align-items: center; gap: 8px;
 }
-.hero-summary { font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; }
-.hero-links { display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap; }
-.hero-links a {
-  font-family: var(--font-code); font-size: 0.9rem;
-  border: 1px solid var(--glass-border); padding: 8px 16px;
-  border-radius: 6px; background: var(--glass-bg);
-  backdrop-filter: blur(5px); transition: all 0.2s;
-}
-.hero-links a:hover { border-color: var(--accent-color); color: var(--accent-color); transform: translateY(-2px); }
-
-/* Sections */
-section { padding: 80px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
-section h3 {
-  font-size: 1.5rem; margin-bottom: 40px;
-  display: flex; align-items: center; gap: 12px;
-}
-section h3::after { content: ''; height: 1px; flex: 1; background: var(--glass-border); }
-
-/* Cards */
-.card, .goal-card, .imp-card, .exp-card {
-  background: var(--glass-bg); border: 1px solid var(--glass-border);
-  padding: 32px; border-radius: 16px;
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-  position: relative; overflow: hidden;
-  display: flex; flex-direction: column;
-}
-.card:hover, .goal-card:hover, .imp-card:hover, .exp-card:hover {
-  transform: translateY(-5px) scale(1.01);
-  border-color: rgba(255,255,255,0.2);
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5);
-  background: var(--card-hover);
+.system-title-bar span::before {
+  content: '●'; color: #34d399; animation: blink 1.5s infinite;
 }
 
-/* Experience Cards */
-.exp-grid { display: flex; flex-direction: column; gap: 24px; }
-.exp-card { flex-direction: column; }
-.exp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
-.exp-title h4 { font-size: 1.2rem; color: #fff; margin-bottom: 4px; }
-.exp-title .company {
-  font-family: var(--font-code); font-size: 0.9rem;
-  color: var(--accent-color);
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+
+/* Hologram Planet HUD Labels in 3D projection */
+#hud-layer {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 5; pointer-events: none;
 }
-.exp-badge {
-  font-family: var(--font-code); font-size: 0.75rem;
-  padding: 4px 12px; border-radius: 50px;
-  border: 1px solid rgba(99,102,241,0.4);
-  color: var(--accent-color); background: rgba(99,102,241,0.08);
+.planet-hud {
+  position: absolute; transform: translate(-50%, -100%);
+  pointer-events: auto; cursor: pointer;
+  background: rgba(13, 8, 25, 0.75);
+  border: 1px solid rgba(0, 242, 254, 0.4);
+  padding: 6px 14px; border-radius: 4px;
+  font-family: var(--font-code); font-size: 0.78rem; font-weight: 700;
+  color: #ffffff; letter-spacing: 1.5px;
+  box-shadow: 0 0 15px rgba(0, 242, 254, 0.25), inset 0 0 8px rgba(0, 242, 254, 0.1);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex; align-items: center; gap: 8px;
   white-space: nowrap;
 }
-.exp-badge.current {
-  border-color: rgba(52, 211, 153, 0.4);
-  color: #34d399; background: rgba(52,211,153,0.08);
+.planet-hud::after {
+  content: ''; position: absolute; bottom: -12px; left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0; border-style: solid;
+  border-color: rgba(0, 242, 254, 0.6) transparent transparent;
 }
-.exp-meta {
-  font-family: var(--font-code); font-size: 0.8rem;
-  color: var(--text-secondary); margin-bottom: 16px;
+.planet-hud:hover {
+  transform: translate(-50%, -115%) scale(1.1);
+  background: rgba(0, 242, 254, 0.25);
+  border-color: #fff;
+  box-shadow: 0 0 25px var(--glow-cyan);
+  color: #fff;
 }
-.exp-bullets { list-style: none; padding: 0; margin-bottom: 16px; }
-.exp-bullets li {
-  font-size: 0.92rem; color: var(--text-secondary);
-  padding: 4px 0 4px 16px; position: relative;
-}
-.exp-bullets li::before {
-  content: '▹'; position: absolute; left: 0;
-  color: var(--accent-color); font-size: 0.8rem;
-}
-
-/* Projects Grid */
-.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-.project-thumb {
-  width: 100%; height: 180px; object-fit: cover;
-  border-radius: 8px; margin-bottom: 20px;
-  opacity: 0.8; transition: opacity 0.3s;
-}
-.card:hover .project-thumb { opacity: 1; }
-.card h4, .imp-card h4, .goal-card h4 { font-size: 1.2rem; margin-bottom: 12px; color: #fff; }
-.card p, .imp-card p, .goal-card p { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 20px; flex-grow: 1; }
-.muted {
-  font-size: 0.85rem !important; color: #666 !important;
-  font-family: var(--font-code); margin-bottom: 12px !important;
-  display: block; flex-grow: 0 !important;
+.planet-hud .hud-idx {
+  color: var(--accent-magenta); font-size: 0.72rem; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 6px;
 }
 
-/* Perf Badges */
-.perf-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.perf-badge {
-  font-family: var(--font-code); font-size: 0.72rem;
-  padding: 3px 10px; border-radius: 4px;
-  background: rgba(52,211,153,0.08);
-  border: 1px solid rgba(52,211,153,0.25);
-  color: #34d399;
+/* Docked Orbital Command Bar (Bottom Nav) */
+.orbital-dock {
+  position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+  z-index: 20; display: flex; gap: 12px;
+  background: rgba(11, 7, 22, 0.75);
+  border: 1px solid var(--glass-border);
+  padding: 10px 18px; border-radius: 50px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(139,92,246,0.2);
+}
+.dock-btn {
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+  padding: 8px 16px; border-radius: 30px;
+  font-family: var(--font-code); font-size: 0.82rem; font-weight: 600;
+  color: #d8b4fe; cursor: pointer; transition: all 0.3s;
+  display: flex; align-items: center; gap: 8px;
+}
+.dock-btn:hover, .dock-btn.active {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(217, 70, 239, 0.2));
+  border-color: var(--accent-cyan); color: #ffffff;
+  transform: translateY(-4px);
+  box-shadow: 0 0 20px var(--glow-cyan);
+}
+.dock-btn span { font-size: 1.1rem; }
+
+/* Virtual Hologram Windows */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(5, 2, 12, 0.5);
+  z-index: 100; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  padding: 20px;
+}
+.modal-overlay.open {
+  opacity: 1; pointer-events: auto;
 }
 
-/* Tags */
-.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; margin-top: auto; }
-.tags span {
-  font-family: var(--font-code); font-size: 0.75rem;
-  color: var(--accent-color); background: rgba(99,102,241,0.1);
-  padding: 4px 10px; border-radius: 4px;
-  border: 1px solid rgba(99,102,241,0.2);
+.virtual-window {
+  width: 100%; max-width: 980px; max-height: 86vh;
+  background: var(--glass-bg);
+  border: 1.5px solid var(--accent-cyan);
+  border-radius: 16px;
+  backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 0 60px rgba(0, 242, 254, 0.25), 0 0 100px rgba(217, 70, 239, 0.2), inset 0 0 30px rgba(0, 242, 254, 0.05);
+  display: flex; flex-direction: column;
+  transform: scale(0.85) translateY(40px) rotateX(10deg);
+  opacity: 0; transition: all 0.45s cubic-bezier(0.1, 0.9, 0.2, 1);
+  overflow: hidden;
+  position: relative;
 }
-.project-links a {
-  font-size: 0.9rem; font-weight: 600;
-  margin-right: 16px; border-bottom: 1px solid transparent;
-}
-.project-links a:hover { border-bottom-color: var(--accent-color); color: var(--accent-color); }
-
-/* Skills */
-.skill-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
-.skill-grid div {
-  background: rgba(255,255,255,0.02); padding: 20px;
-  border-radius: 12px; border: 1px solid var(--glass-border);
-}
-.skill-grid strong {
-  display: block; margin-bottom: 8px;
-  color: var(--accent-color); font-family: var(--font-code);
+.modal-overlay.open .virtual-window {
+  transform: scale(1) translateY(0) rotateX(0deg);
+  opacity: 1;
 }
 
-/* Certifications */
+/* Sci-Fi Brackets on Window Corners */
+.virtual-window::before, .virtual-window::after {
+  content: ''; position: absolute; width: 25px; height: 25px;
+  border-color: var(--accent-magenta); border-style: solid; pointer-events: none; z-index: 5;
+}
+.virtual-window::before { top: 6px; left: 6px; border-width: 2px 0 0 2px; }
+.virtual-window::after { bottom: 6px; right: 6px; border-width: 0 2px 2px 0; }
+
+.window-header {
+  padding: 18px 26px;
+  background: rgba(139, 92, 246, 0.12);
+  border-bottom: 1px solid rgba(0, 242, 254, 0.3);
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-scifi); font-size: 1.1rem; letter-spacing: 2px;
+  color: var(--accent-cyan);
+}
+.window-title { display: flex; align-items: center; gap: 12px; }
+.close-btn {
+  background: rgba(239, 68, 68, 0.15); border: 1px solid #ef4444;
+  color: #fca5a5; font-family: var(--font-code); font-size: 0.85rem; font-weight: 700;
+  padding: 8px 18px; border-radius: 6px; cursor: pointer;
+  transition: all 0.25s; display: flex; align-items: center; gap: 6px;
+  letter-spacing: 1px;
+}
+.close-btn:hover {
+  background: #ef4444; color: #fff;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  transform: scale(1.05);
+}
+
+.window-body {
+  padding: 34px; overflow-y: auto; max-height: calc(86vh - 75px);
+  color: var(--text-primary); user-select: text;
+}
+.window-body::-webkit-scrollbar { width: 8px; }
+.window-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+.window-body::-webkit-scrollbar-thumb { background: var(--accent-purple); border-radius: 4px; }
+
+/* Portfolio Internal Styles Inside Virtual Window */
+h2, h3, h4 { font-weight: 800; letter-spacing: -0.01em; margin-bottom: 16px; color: #fff; }
+p { font-size: 1rem; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
+a { color: var(--accent-cyan); text-decoration: none; transition: all 0.2s; }
+a:hover { color: #fff; text-shadow: 0 0 8px #fff; }
+
+.profile-hero { display: flex; gap: 32px; align-items: center; margin-bottom: 28px; flex-wrap: wrap; }
+.profile-photo {
+  width: 130px; height: 130px; border-radius: 50%; object-fit: cover;
+  border: 2px solid rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 35px var(--glow-purple), 0 0 15px var(--glow-cyan);
+}
+.profile-info h2 {
+  font-size: 2.4rem; background: linear-gradient(135deg, #ffffff, var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.profile-info h3 { font-family: var(--font-code); font-size: 1.15rem; color: var(--accent-magenta); margin-bottom: 12px; }
+.social-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 16px; }
+.social-links a {
+  font-family: var(--font-code); font-size: 0.88rem;
+  border: 1px solid rgba(139, 92, 246, 0.4); padding: 10px 20px;
+  border-radius: 8px; background: rgba(26, 17, 48, 0.6);
+  color: #fff; font-weight: 600;
+}
+.social-links a:hover {
+  border-color: var(--accent-cyan); background: rgba(0, 242, 254, 0.2);
+  transform: translateY(-2px); box-shadow: 0 0 15px var(--glow-cyan);
+}
+
+/* Experience & Project Cards */
+.card-grid { display: flex; flex-direction: column; gap: 24px; }
+.project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 24px; }
+.holo-card {
+  background: rgba(22, 14, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 28px; border-radius: 14px;
+  transition: all 0.3s; position: relative;
+  display: flex; flex-direction: column;
+}
+.holo-card:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(30, 20, 56, 0.85);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 25px rgba(0, 242, 254, 0.2);
+}
+.exp-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.exp-header h4 { font-size: 1.25rem; color: #fff; margin-bottom: 4px; }
+.exp-header .company { font-family: var(--font-code); color: var(--accent-cyan); font-size: 0.92rem; }
+.badge {
+  font-family: var(--font-code); font-size: 0.74rem; padding: 4px 12px;
+  border-radius: 50px; background: rgba(139, 92, 246, 0.2); border: 1px solid var(--accent-purple);
+  color: #f0abfc; white-space: nowrap;
+}
+.badge.current { background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399; }
+.meta-date { font-family: var(--font-code); font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 14px; text-transform: uppercase; }
+.bullets { list-style: none; padding: 0; margin-bottom: 18px; }
+.bullets li { padding: 5px 0 5px 20px; position: relative; font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; }
+.bullets li::before { content: '✦'; position: absolute; left: 0; color: var(--accent-cyan); }
+.project-thumb { width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.1); }
+.perf-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.perf-pill { font-family: var(--font-code); font-size: 0.72rem; padding: 3px 10px; border-radius: 4px; background: rgba(0,242,254,0.1); border: 1px solid rgba(0,242,254,0.3); color: var(--accent-cyan); font-weight: 600; }
+
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 10px; }
+.tags span { font-family: var(--font-code); font-size: 0.74rem; background: rgba(217, 70, 239, 0.12); color: #f5d0fe; border: 1px solid rgba(217, 70, 239, 0.3); padding: 4px 10px; border-radius: 6px; }
+
+.project-links { margin-top: 18px; display: flex; gap: 20px; }
+.project-links a { font-family: var(--font-code); font-size: 0.88rem; font-weight: 700; color: var(--accent-cyan); display: inline-flex; align-items: center; gap: 6px; }
+.project-links a::after { content: '↗'; }
+
+/* Skills Grid & Certs */
+.skill-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; }
+.skill-box { background: rgba(26, 17, 48, 0.5); border: 1px solid rgba(255,255,255,0.12); padding: 22px; border-radius: 12px; }
+.skill-box strong { display: block; font-family: var(--font-code); color: var(--accent-cyan); font-size: 1rem; margin-bottom: 10px; }
 .cert-list { display: flex; flex-wrap: wrap; gap: 12px; }
-.cert-item {
-  padding: 10px 16px; background: rgba(255,255,255,0.03);
-  border: 1px solid var(--glass-border); border-radius: 50px;
-  font-size: 0.9rem; color: #d1d5db; transition: 0.2s;
-}
-.cert-item:hover { background: rgba(255,255,255,0.08); border-color: #fff; color: #fff; }
+.cert-tag { background: rgba(20, 14, 38, 0.7); border: 1px solid rgba(139,92,246,0.4); color: #e2e8f0; padding: 10px 20px; border-radius: 50px; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: all 0.25s; }
+.cert-tag::before { content: '★'; color: var(--accent-magenta); }
+.cert-tag:hover { background: rgba(0,242,254,0.2); border-color: var(--accent-cyan); transform: scale(1.05); }
 
-/* Nav Dots */
-.nav-dots {
-  position: fixed; right: 30px; top: 50%;
-  transform: translateY(-50%); display: flex;
-  flex-direction: column; gap: 12px; z-index: 100;
-}
-.nav-dots button {
-  width: 8px; height: 8px; border-radius: 50%; border: none;
-  background: rgba(255,255,255,0.2); cursor: pointer; transition: 0.3s;
-}
-.nav-dots button.active {
-  background: var(--accent-color); transform: scale(1.5);
-  box-shadow: 0 0 10px var(--accent-glow);
+/* Scan Instructions Message */
+.scan-hint {
+  position: fixed; top: 25px; right: 35px; z-index: 10;
+  font-family: var(--font-code); font-size: 0.82rem; color: #a78bfa;
+  background: rgba(13, 8, 25, 0.7); border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 8px 16px; border-radius: 20px; pointer-events: none;
 }
 
 @media (max-width: 768px) {
-  .hero h1 { font-size: 2.5rem; }
+  .system-title-bar { top: 15px; left: 15px; }
+  .system-title-bar h1 { font-size: 1.2rem; }
+  .scan-hint { display: none; }
+  .orbital-dock { bottom: 15px; width: 92vw; justify-content: space-between; padding: 8px 12px; border-radius: 20px; flex-wrap: wrap; }
+  .dock-btn { padding: 6px 12px; font-size: 0.75rem; }
+  .window-body { padding: 20px; }
   .project-grid { grid-template-columns: 1fr; }
-  .nav-dots { display: none; }
-  .custom-cursor { display: none; }
-  body { cursor: auto; }
 }
 </style>
 </head>
 <body>
+
+<div class="system-title-bar">
+  <h1>SUMEET KHATRI // CONSTELLATION</h1>
+  <span>SYSTEM INTERFACE ONLINE // TAP PLANET TO ENGAGE</span>
+</div>
+
+<div class="scan-hint">🔭 DRAG TO ROTATE &bull; TAP PLANETS TO SCAN</div>
+
+<!-- 3D WebGL Constellation -->
 <div id="canvas-container"></div>
-<div class="custom-cursor"></div>
-<div class="nav-dots"></div>
+<div id="hud-layer">
+  <div class="planet-hud" id="hud-0" onclick="openWindow('profile')"><span class="hud-idx">[01]</span> ☀️ ABOUT CORE</div>
+  <div class="planet-hud" id="hud-1" onclick="openWindow('experience')"><span class="hud-idx">[02]</span> 🪐 WORK EXPERIENCE</div>
+  <div class="planet-hud" id="hud-2" onclick="openWindow('flagship')"><span class="hud-idx">[03]</span> 🌋 FLAGSHIP ENGINE</div>
+  <div class="planet-hud" id="hud-3" onclick="openWindow('projects')"><span class="hud-idx">[04]</span> 🌐 FEATURED PROJECTS</div>
+  <div class="planet-hud" id="hud-4" onclick="openWindow('skills')"><span class="hud-idx">[05]</span> ❄️ TECH ARSENAL</div>
+  <div class="planet-hud" id="hud-5" onclick="openWindow('certifications')"><span class="hud-idx">[06]</span> ⚡ CERTS & GOALS</div>
+</div>
 
-<div class="container">
+<!-- Docked Orbital Command Bar -->
+<div class="orbital-dock">
+  <button class="dock-btn" onclick="openWindow('profile')"><span>☀️</span> Profile</button>
+  <button class="dock-btn" onclick="openWindow('experience')"><span>🪐</span> Experience</button>
+  <button class="dock-btn" onclick="openWindow('flagship')"><span>🌋</span> Flagship</button>
+  <button class="dock-btn" onclick="openWindow('projects')"><span>🌐</span> Projects</button>
+  <button class="dock-btn" onclick="openWindow('skills')"><span>❄️</span> Skills</button>
+  <button class="dock-btn" onclick="openWindow('certifications')"><span>⚡</span> Certs & Goals</button>
+</div>
 
-  <!-- HERO -->
-  <header class="hero">
-    <div class="hero-profile">
-      <img class="hero-photo" src="sumeet image.png" alt="Sumeet Khatri">
-      <div class="hero-text">
-        <h1>Sumeet Khatri</h1>
-        <h2>Software / AI Engineer (New Grad-2026)</h2>
-      </div>
+<!-- Virtual Hologram Modal Overlays -->
+<div class="modal-overlay" id="overlay-profile">
+  <div class="virtual-window">
+    <div class="window-header">
+      <div class="window-title"><span>☀️</span> SECTOR 01 // ABOUT & SUMMARY CORE</div>
+      <button class="close-btn" onclick="closeWindows()">✕ DISENGAGE</button>
     </div>
-    <p class="hero-summary">
-      Strong C++ systems skills, Python backend experience, and hands-on ML infrastructure expertise.
-      Built high-performance storage engines, low-latency inference systems, and scalable ML training workflows.
-    </p>
-    <div class="hero-links">
-      <a href="https://www.linkedin.com/in/khatri-sumeet/" target="_blank">LinkedIn</a>
-      <a href="https://github.com/sumeet1212khatri" target="_blank">GitHub</a>
-      <a href="https://leetcode.com/u/4lsoDfYfse/" target="_blank">LeetCode</a>
-      <a href="mailto:sumeetkhatri1771@gmail.com">Email</a>
-    </div>
-  </header>
-
-  <!-- WORK EXPERIENCE -->
-  <section class="experience">
-    <h3>Work Experience</h3>
-    <div class="exp-grid">
-
-      <!-- STW Services -->
-      <div class="exp-card">
-        <div class="exp-header">
-          <div class="exp-title">
-            <h4>Software Engineer</h4>
-            <span class="company">STW Services LLP &nbsp;·&nbsp; Pune</span>
+    <div class="window-body">
+      <div class="profile-hero">
+        <img class="profile-photo" src="sumeet image.png" alt="Sumeet Khatri">
+        <div class="profile-info">
+          <h2>Sumeet Khatri</h2>
+          <h3>Software / AI Engineer (New Grad-2026)</h3>
+          <p style="max-width: 600px; margin-bottom: 14px;">Strong C++ systems skills, Python backend experience, and hands-on ML infrastructure expertise. Built high-performance storage engines, low-latency inference systems, and scalable ML training workflows.</p>
+          <div class="perf-row" style="margin-bottom: 20px; gap: 10px;">
+            <span class="perf-pill" style="border-color:#10b981;color:#34d399;font-size:0.82rem;padding:6px 14px;box-shadow: 0 0 10px rgba(16,185,129,0.2);">★ 3-Star Coder (CodeChef)</span>
+            <span class="perf-pill" style="border-color:#38bdf8;color:#7dd3fc;font-size:0.82rem;padding:6px 14px;box-shadow: 0 0 10px rgba(56,189,248,0.2);">⚡ 1400+ Rating (CodeForces)</span>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <span class="exp-badge current">Current</span>
-            <span class="exp-badge">Feb 2026 – Present</span>
+          <div class="social-links">
+            <a href="https://www.linkedin.com/in/khatri-sumeet/" target="_blank">LinkedIn</a>
+            <a href="https://github.com/sumeet1212khatri" target="_blank">GitHub</a>
+            <a href="https://leetcode.com/u/sumeet_khatri/" target="_blank">LeetCode</a>
+            <a href="https://codeforces.com/profile/sumeetkhatri398" target="_blank">CodeForces</a>
+            <a href="https://www.codechef.com/users/sumeetkhatri" target="_blank">CodeChef</a>
+            <a href="mailto:sumeetkhatri1771@gmail.com">Email</a>
           </div>
         </div>
-        <div class="exp-meta">Internship</div>
-        <ul class="exp-bullets">
-          <li>Engineered an end-to-end inventory synchronization pipeline across seller and buyer systems, preventing over-ordering and enforcing accurate stock limits in high-volume auction transactions.</li>
-          <li>Built real-time aggregation workflows computing inventory from distributed seller records, eliminating 5K+ unit over-purchase scenarios and improving order reliability in production environments.</li>
-          <li>Optimized reporting pipelines using refined query filters and time-window logic, eliminating empty datasets and ensuring accurate daily/weekly analytics for operational decision-making.</li>
-          <li>Revamped admin dashboard with grouped data models and drill-down interfaces, improving large-scale inventory visibility and reducing manual inspection effort for operational teams.</li>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="overlay-experience">
+  <div class="virtual-window">
+    <div class="window-header">
+      <div class="window-title"><span>🪐</span> SECTOR 02 // WORK EXPERIENCE [KRONOS]</div>
+      <button class="close-btn" onclick="closeWindows()">✕ DISENGAGE</button>
+    </div>
+    <div class="window-body">
+      <div class="card-grid">
+        <!-- STW Services -->
+        <div class="holo-card">
+          <div class="exp-header">
+            <div>
+              <h4>Software Engineering Intern</h4>
+              <div class="company">STW Services LLP &nbsp;·&nbsp; On-site &nbsp;·&nbsp; Pune</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <span class="badge current">Current</span>
+              <span class="badge">Feb 2026 – Present</span>
+            </div>
+          </div>
+          <div class="meta-date">Internship</div>
+          <ul class="bullets">
+            <li>Diagnosed a data-consistency bug in a production marketplace where seller inventory updates weren't propagating to the buyer facing availability data, letting orders exceed real stock; traced the gap through the data flow and designed a synchronization fix that eliminated a class of order fulfillment failures.</li>
+            <li>Rebuilt a monolithic admin data view into a grouped, drill down interface to reduce rendering load and clicks to insight on high volume records.</li>
+            <li>Built automated reporting pipelines against a live database, fixing query filter and timezone-alignment bugs that were silently producing empty or incorrect output. Learned to verify actual data shape rather than trust it ran without errors.</li>
+          </ul>
+          <div class="tags">
+            <span>Dataverse</span><span>JavaScript</span><span>REST APIs</span><span>web-scale databases</span><span>data pipelines</span><span>cloud platform</span><span>Node.js</span><span>Database</span><span>compilers</span>
+          </div>
+        </div>
+
+        <!-- Owl AI -->
+        <div class="holo-card">
+          <div class="exp-header">
+            <div>
+              <h4>Machine Learning Engineer</h4>
+              <div class="company">Owl AI (Overload Ware Labs AI) &nbsp;·&nbsp; Remote &nbsp;·&nbsp; Pune</div>
+            </div>
+            <span class="badge">Sep 2025 – Oct 2025</span>
+          </div>
+          <div class="meta-date">Internship</div>
+          <ul class="bullets">
+            <li>Optimized GPU memory footprint from ~12GB to ~3GB by fine-tuning LLaMA-3.2 3B using QLoRA on 172K reasoning samples; achieved training loss of ~0.48 after 60 epochs.</li>
+            <li>Integrated LoRA adapters into Q/K/V/O projection and MLP blocks, training only low-rank matrices instead of the full 3B parameters; enabled parameter-efficient chain-of-thought fine-tuning on a single GPU.</li>
+          </ul>
+          <div class="tags">
+            <span>Python</span><span>PyTorch</span><span>QLoRA</span><span>LLaMA</span><span>Transformers</span><span>Fine-Tuning</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="overlay-flagship">
+  <div class="virtual-window">
+    <div class="window-header">
+      <div class="window-title"><span>🌋</span> SECTOR 03 // FLAGSHIP ENGINE [VULCAN]</div>
+      <button class="close-btn" onclick="closeWindows()">✕ DISENGAGE</button>
+    </div>
+    <div class="window-body">
+      <div class="holo-card" style="border-color: var(--accent-orange);">
+        <h4>NanoMind | Zero-Dependency C++17 LLM Inference Engine</h4>
+        <div class="meta-date">Nov 2025 – Aug 2026 &nbsp;·&nbsp; C++17, AVX2/SIMD, OpenMP, FastAPI</div>
+        <div class="perf-row">
+          <span class="perf-pill" style="border-color:#f97316;color:#fdba74;">37.7 tok/s</span>
+          <span class="perf-pill" style="border-color:#f97316;color:#fdba74;">2.47× TTFT speedup</span>
+          <span class="perf-pill" style="border-color:#f97316;color:#fdba74;">LRU KV cache</span>
+          <span class="perf-pill" style="border-color:#f97316;color:#fdba74;">&lt;5% TPS variance</span>
+          <span class="perf-pill" style="border-color:#f97316;color:#fdba74;">100+ MAU</span>
+        </div>
+        <ul class="bullets">
+          <li>Built a zero-dependency C++17 LLM inference engine (NanoMind) from scratch, achieving 37.7 tok/s, 2.47× TTFT speedup via LRU KV cache and &lt;5% TPS variance under 1-32 concurrent users. Deployed on HuggingFace Spaces with 100+ MAU.</li>
+          <li>Optimized with AVX2/SIMD and OpenMP Parallelized attention heads and matmul rows, reducing latency by 60% vs. naive implementation. Pre-allocated global buffers eliminated per-request heap allocations.</li>
+          <li>Designed a FastAPI backend with SSE streaming, engine pooling (N=3), and latency tracking (P50/P95/P99), enabling real-time token generation for chat applications.</li>
+          <li>Trained a 152M-parameter GPT-2 model on 294M tokens using mixed-precision FP16 and gradient accumulation on 2x Kaggle T4 GPUs.</li>
         </ul>
         <div class="tags">
-          <span>JavaScript</span><span>jQuery</span><span>Dataverse</span>
-          <span>OData</span><span>Power Automate</span><span>HTML/CSS</span>
+          <span>C++17</span><span>Python</span><span>AVX2/SIMD</span><span>OpenMP</span><span>FastAPI</span><span>Docker</span><span>Transformer Architecture</span><span>LLM Inference Optimization</span><span>AntiGravity</span>
+        </div>
+        <div class="project-links" style="flex-wrap:wrap;">
+          <a href="https://github.com/sumeet1212khatri/Nano-Mind" target="_blank">GitHub</a>
+          <a href="https://sumeet1212khatri.github.io/nanomind.in/" target="_blank">Website Preview</a>
+          <a href="https://huggingface.co/spaces/NOT-OMEGA/NanoMind" target="_blank">Live Deploy</a>
+          <a href="https://www.youtube.com/watch?v=OBEMQljAUis" target="_blank">YouTube Demo</a>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <!-- Owl AI -->
-      <div class="exp-card">
-        <div class="exp-header">
-          <div class="exp-title">
-            <h4>Machine Learning Engineer</h4>
-            <span class="company">Owl AI (Overload Ware Labs AI) &nbsp;·&nbsp; Pune</span>
+<div class="modal-overlay" id="overlay-projects">
+  <div class="virtual-window">
+    <div class="window-header">
+      <div class="window-title"><span>🌐</span> SECTOR 04 // FEATURED PROJECTS [NOVA PRIME]</div>
+      <button class="close-btn" onclick="closeWindows()">✕ DISENGAGE</button>
+    </div>
+    <div class="window-body">
+      <div class="project-grid">
+        <!-- CollabDocs -->
+        <div class="holo-card">
+          <h4>CollabDocs | Real-Time Collaborative Editor</h4>
+          <div class="meta-date">Mar 2026 – May 2026</div>
+          <div class="perf-row">
+            <span class="perf-pill">541 ops/sec</span>
+            <span class="perf-pill">p95 1.22ms latency</span>
+            <span class="perf-pill">140+ MAU</span>
           </div>
-          <span class="exp-badge">Sep 2025 – Oct 2025</span>
+          <p>Built a real-time collaborative editor with a custom Operational Transformation (OT) engine in C++17, verified zero divergence across 500 randomized concurrent-edit trials. Designed high-performance WebSocket server using Boost.Asio with strand-serialized write queues and op broadcast batching.</p>
+          <div class="tags"><span>C++17</span><span>Boost.Asio</span><span>WebSockets</span><span>Operational Transformation</span><span>Multithreading</span><span>CMake</span><span>Docker</span><span>AntiGravity</span></div>
+          <div class="project-links">
+            <a href="https://not-omega-collabdocs.hf.space/" target="_blank">Live Deploy</a>
+            <a href="https://github.com/sumeet1212khatri/CollabDocs" target="_blank">GitHub</a>
+          </div>
         </div>
-        <div class="exp-meta">Internship</div>
-        <ul class="exp-bullets">
-          <li>Fine-tuned LLaMA-3.2 3B Instruct using QLoRA (4-bit NF4 quantization + LoRA rank=16) on the ServiceNow R1 Distill dataset (172K reasoning samples) for step-by-step chain-of-thought generation.</li>
-          <li>Reduced GPU memory footprint from ~12GB (FP32 equivalent) to ~3GB using block-wise 4-bit quantization.</li>
-          <li>Configured parameter-efficient training by injecting LoRA adapters into Q, K, V, O projection layers and MLP blocks, training only low-rank matrices instead of full 3B parameters.</li>
-          <li>Implemented supervised fine-tuning with AdamW optimizer, achieving final training loss ~0.48 after 60 epochs.</li>
-        </ul>
-        <div class="tags">
-          <span>Python</span><span>Google Colab</span><span>Transformers</span><span>Fine-Tuning</span><span>QLoRA</span>
-        </div>
-      </div>
 
-    </div>
-  </section>
+        <!-- LogAI Engine -->
+        <div class="holo-card">
+          <h4>LogAI Engine | High-Throughput Telemetry Classifier</h4>
+          <div class="perf-row">
+            <span class="perf-pill">6,300+ logs/sec</span>
+            <span class="perf-pill">99.69% coverage</span>
+            <span class="perf-pill">p50 0.019ms</span>
+          </div>
+          <p>Built a 3-tier log classifier (Regex → BERT/ONNX → Mistral-7B) processing 2M logs at 6,300+ logs/sec. Applied LRU cache on LLM dispatch path resolving 4,528 of 6,117 LLM-routed logs without live API calls. Diagnosed and fixed CPU starvation under batch load.</p>
+          <div class="tags"><span>Python</span><span>BERT</span><span>ONNX</span><span>Mistral-7B</span><span>Regex</span><span>Gradio</span><span>Concurrency</span></div>
+          <div class="project-links">
+            <a href="https://huggingface.co/spaces/NOT-OMEGA/LogAI-Engine" target="_blank">Live Deploy</a>
+            <a href="https://github.com/sumeet1212khatri/LogAI-Engine" target="_blank">GitHub</a>
+          </div>
+        </div>
 
-  <!-- FUTURE GOALS -->
-  <section class="future-goals">
-    <h3>Future Goals</h3>
-    <div class="goal-card">
-      <h4>Building RedOpsAI – The Future of Web Security</h4>
-      <p>Over the next six months, my goal is to build RedOpsAI, a SaaS platform that makes website security testing simple and effective. The platform will provide safe and transparent scans, showing live visual feedback of potential risks without causing any harm to the site.</p>
-      <div class="goal-links project-links">
-        <a href="https://sumeet1212khatri.github.io/RedOpsAI-Autonomous-Pentesting-Agent/">Live Demo</a>
-        <a href="https://github.com/sumeet1212khatri/RedOpsAI-Autonomous-Pentesting-Agent">Source Code</a>
-      </div>
-    </div>
-  </section>
+        <!-- KVInfer -->
+        <div class="holo-card">
+          <h4>KVInfer – GPT-2 Inference Engine</h4>
+          <div class="meta-date">Nov 2025 – Mar 2026</div>
+          <div class="perf-row">
+            <span class="perf-pill">18.7 tok/s</span>
+            <span class="perf-pill">TTFT 847ms</span>
+            <span class="perf-pill">14 concurrent sessions</span>
+          </div>
+          <p>Engineered a C++ GPT-2 inference engine with SIMD and parallelism. Architected a multi-engine process pool with KV-cache and LRU eviction, sustaining 14 concurrent sessions within 8GB/16GB RAM.</p>
+          <div class="tags"><span>C++</span><span>SIMD</span><span>FastAPI</span><span>Docker</span><span>LLM Inference</span></div>
+          <div class="project-links">
+            <a href="https://huggingface.co/spaces/NOT-OMEGA/KVInfer" target="_blank">Live Demo</a>
+            <a href="https://github.com/sumeet1212khatri" target="_blank">GitHub</a>
+          </div>
+        </div>
 
-  <!-- CERTIFICATIONS -->
-  <section class="certifications">
-    <h3>Certifications</h3>
-    <div class="cert-list">
-      <div class="cert-item">Google DeepMind's AI Research Badge</div>
-      <div class="cert-item">Google Generative AI Leader</div>
-      <div class="cert-item">PMI Generative AI for PMs</div>
-      <div class="cert-item">Data Structures & Algorithms in C++</div>
-      <div class="cert-item">CodeBasics ML Masterclass</div>
-      <div class="cert-item">Advanced Deep Learning</div>
-      <div class="cert-item">McKinsey Forward (Top 1%)</div>
-      <div class="cert-item">System Design (LLD/HLD)</div>
-    </div>
-  </section>
+        <!-- C++ Inference Engine for 50M GPT Model -->
+        <div class="holo-card">
+          <h4>C++ Inference Engine for 50M GPT Model</h4>
+          <div class="meta-date">Nov 2025 – Feb 2026</div>
+          <div class="perf-row">
+            <span class="perf-pill">28.12 tok/s</span>
+            <span class="perf-pill">35.57ms/token</span>
+            <span class="perf-pill">61% latency reduction</span>
+          </div>
+          <p>CPU-optimized C++ inference engine for a 51M-parameter GPT model, achieving 28.12 tokens/sec on an Intel i3-12th Gen CPU. Reduced per-token latency 91.87ms → 35.57ms by eliminating heap allocations and parallelizing with OpenMP & AVX2/FMA kernels.</p>
+          <div class="tags"><span>C++</span><span>Python</span><span>FastAPI</span><span>OpenMP</span><span>AVX2/SIMD</span></div>
+          <div class="project-links">
+            <a href="https://slm-story-engine.onrender.com/" target="_blank">Deployed Live</a>
+            <a href="https://github.com/sumeet1212khatri/SLM-Story-Engine" target="_blank">GitHub</a>
+          </div>
+        </div>
 
-  <!-- FLAGSHIP PROJECT -->
-  <section class="imp-project">
-    <h3>Flagship Project</h3>
-    <div class="imp-card">
-      <div class="imp-content">
-        <h4>LSM-Tree Key-Value Storage Engine</h4>
-        <p class="muted">Feb 2026 – Apr 2026 &nbsp;·&nbsp; C++17, STL, CMake, GoogleTest</p>
-        <div class="perf-row">
-          <span class="perf-badge">~225K writes/sec</span>
-          <span class="perf-badge">~2.8M cached reads/sec</span>
-          <span class="perf-badge">0.23µs p50 latency</span>
-          <span class="perf-badge">~99% disk-read elimination</span>
-          <span class="perf-badge">~9M lookups/sec</span>
+        <!-- C++ Order Matching Engine -->
+        <div class="holo-card">
+          <img class="project-thumb" src="c++ order.png" alt="C++ Order Matching">
+          <h4>C++ High-Performance Order Matching Engine</h4>
+          <div class="meta-date">Aug 2025 – Jan 2026</div>
+          <div class="perf-row"><span class="perf-pill">53K+ orders/sec</span><span class="perf-pill">20K orders in 375ms</span></div>
+          <p>Engineered a robust Order Matching Engine in C++20 using std::map for strict price-time priority and std::unordered_map for O(1) lookups. Validated with a comprehensive GoogleTest framework.</p>
+          <div class="tags"><span>C++20</span><span>STL</span><span>Multithreading</span><span>Google Test</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/High-Performance-CPP-Order-Matching-Engine" target="_blank">View Code</a></div>
         </div>
-        <ul class="exp-bullets" style="margin-bottom:20px;">
-          <li>Designed and implemented a zero-dependency LSM-tree storage engine in C++17 with WAL, MemTables, SSTables, and compaction, sustaining ~225K writes/sec and ~2.8M cached reads/sec (0.23µs p50).</li>
-          <li>Engineered a double-hashing Bloom filter and O(1) LRU block cache to optimize read amplification under Zipfian workloads, achieving ~99% disk-read elimination and ~9M lookups/sec.</li>
-          <li>Built crash-safe WAL with idempotent recovery and optimized compaction strategy, reducing read amplification from O(n) to O(1), validated via p50/p95/p99 latency benchmarks.</li>
-          <li>Analyzed trade-offs between write amplification, read latency, and memory usage, tuning compaction and caching policies for optimal throughput under constrained memory.</li>
-        </ul>
-        <div class="tags">
-          <span>C++17</span><span>STL</span><span>CMake</span><span>GoogleTest</span>
-          <span>LSM-Tree</span><span>Bloom Filter</span><span>LRU Cache</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri" target="_blank">Source Code</a>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- SKILLS -->
-  <section class="skills">
-    <h3>Technical Arsenal</h3>
-    <div class="skill-grid">
-      <div>
-        <strong>Languages</strong>
-        <p>C++17/20, Python, SQL, JavaScript</p>
-      </div>
-      <div>
-        <strong>Systems</strong>
-        <p>Linux, Concurrency, Multithreading, TCP/IP, SIMD/AVX2, OpenMP</p>
-      </div>
-      <div>
-        <strong>DevOps & Cloud</strong>
-        <p>Docker, Kafka, GitHub Actions, AWS (EC2), FastAPI</p>
-      </div>
-      <div>
-        <strong>Enterprise</strong>
-        <p>jQuery, Dataverse, OData, Power Automate, HTML/CSS</p>
-      </div>
-      <div>
-        <strong>Machine Learning</strong>
-        <p>Supervised/Unsupervised Learning, Ensemble Methods, Feature Engineering, Model Evaluation</p>
-      </div>
-      <div>
-        <strong>Deep Learning & GenAI</strong>
-        <p>Transformers, CNNs, RNN/LSTM, Transfer Learning, Fine-Tuning, QLoRA</p>
-      </div>
-      <div>
-        <strong>AI Infrastructure</strong>
-        <p>PyTorch, Transformers, QLoRA, vLLM, FAISS, LLM Inference</p>
-      </div>
-    </div>
-  </section>
+        <!-- SQL SLM -->
+        <div class="holo-card">
+          <img class="project-thumb" src="SQL SLM.png" style="object-fit:contain;background:rgba(0,0,0,0.3);" alt="SQL SLM">
+          <h4>Custom-Trained SQL Small Language Model (10M GPT)</h4>
+          <div class="meta-date">Sep 2025 – Oct 2025</div>
+          <p>Architected a compact 10M-parameter GPT model from scratch in PyTorch. Implemented mixed-precision and gradient accumulation, reducing per-epoch data loading times by over 90%.</p>
+          <div class="tags"><span>PyTorch</span><span>Transformers</span><span>Mixed-Precision</span><span>10M Params</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/SQL-Injection-GPT" target="_blank">Source Code</a></div>
+        </div>
 
-  <!-- PROJECTS -->
-  <section class="projects">
-    <h3>Featured Projects</h3>
-    <div class="project-grid">
+        <!-- RAG -->
+        <div class="holo-card">
+          <img class="project-thumb" src="RAG.png" alt="RAG System">
+          <h4>ContextEngine: RAG System</h4>
+          <p>Built a full RAG pipeline (BM25 + FAISS) boosting grounded accuracy (42%→71%). Optimized inference using vLLM.</p>
+          <div class="tags"><span>RAG</span><span>vLLM</span><span>FAISS</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/ContextEngine-Production-Ready-RAG-System-with-Hybrid-Retrieval" target="_blank">View Code</a></div>
+        </div>
 
-      <!-- KVInfer -->
-      <div class="card">
-        <h4>KVInfer – GPT-2 Inference Engine</h4>
-        <p class="muted">Nov 2025 – Mar 2026</p>
-        <div class="perf-row">
-          <span class="perf-badge">18.7 tok/s</span>
-          <span class="perf-badge">TTFT 847ms</span>
-          <span class="perf-badge">14 concurrent sessions</span>
+        <!-- Kafka -->
+        <div class="holo-card">
+          <img class="project-thumb" src="KAFKA.png" alt="Kafka Pipeline">
+          <h4>Real-Time Event Stream</h4>
+          <p>Designed an event-driven pipeline for e-commerce data using asynchronous producers/consumers.</p>
+          <div class="tags"><span>Kafka</span><span>Docker</span><span>Python</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/Real-Time-Event-Stream-Pipeline" target="_blank">View Code</a></div>
         </div>
-        <p>Engineered a C++ GPT-2 inference engine with SIMD and parallelism. Architected a multi-engine process pool with KV-cache and LRU eviction, sustaining 14 concurrent sessions within 8GB/16GB RAM.</p>
-        <div class="tags">
-          <span>C++</span><span>SIMD</span><span>FastAPI</span><span>Docker</span><span>LLM Inference</span>
-        </div>
-        <div class="project-links">
-          <a href="https://huggingface.co/spaces/NOT-OMEGA/KVInfer" target="_blank">Live Demo</a>
-          <a href="https://github.com/sumeet1212khatri" target="_blank">GitHub</a>
-        </div>
-      </div>
 
-      <!-- C++ Inference Engine -->
-      <div class="card">
-        <h4>C++ Inference Engine – 50M GPT</h4>
-        <p class="muted">Nov 2025 – Feb 2026</p>
-        <div class="perf-row">
-          <span class="perf-badge">28.12 tok/s</span>
-          <span class="perf-badge">35.57ms/token</span>
-          <span class="perf-badge">61% latency reduction</span>
+        <!-- Fine-Tuning -->
+        <div class="holo-card">
+          <img class="project-thumb" src="FINE TUNNING.png" alt="Fine Tuning">
+          <h4>Memory-Efficient Fine-Tuning</h4>
+          <p>Implemented a QLoRa (4-bit) pipeline, reducing memory footprint by ~70% on a single T4 GPU.</p>
+          <div class="tags"><span>QLoRa</span><span>LLM</span><span>PyTorch</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/Fine-Tuning-LLM-for-Specialized-Q-A-Bot" target="_blank">View Code</a></div>
         </div>
-        <p>CPU-optimized C++ inference engine for a 51M-parameter GPT model. Reduced per-token latency from 91.87ms → 35.57ms by eliminating heap allocations, redesigning tensor layout for cache locality, and parallelizing matrix multiplications with OpenMP.</p>
-        <div class="tags">
-          <span>C++</span><span>Python</span><span>FastAPI</span><span>OpenMP</span><span>AVX2/SIMD</span>
-        </div>
-        <div class="project-links">
-          <a href="https://not-omega-inference.hf.space/" target="_blank">Live Demo</a>
-          <a href="https://github.com/sumeet1212khatri" target="_blank">GitHub</a>
-        </div>
-      </div>
 
-      <!-- C++ Order Matching Engine -->
-      <div class="card">
-        <img class="project-thumb" src="c++ order.png" alt="C++ Order Matching">
-        <h4>C++ High-Performance Order Matching Engine</h4>
-        <p class="muted">Aug 2025 – Jan 2026</p>
-        <div class="perf-row">
-          <span class="perf-badge">53K+ orders/sec</span>
-          <span class="perf-badge">20K orders in 375ms</span>
+        <!-- Code Buddy -->
+        <div class="holo-card">
+          <img class="project-thumb" src="CODE BUDDY.png" alt="AI Coder Buddy">
+          <h4>AI Coder Buddy</h4>
+          <p>AI agent using LangChain that plans and generates multi-file applications, decreasing development cycle time by 30%.</p>
+          <div class="tags"><span>LangChain</span><span>Groq API</span><span>AI Agents</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/AI-Coder-Buddy" target="_blank">GitHub</a></div>
         </div>
-        <p>Engineered a robust Order Matching Engine in C++20 using std::map for strict price-time priority and std::unordered_map for O(1) lookups. Validated with a comprehensive GoogleTest framework.</p>
-        <div class="tags">
-          <span>C++20</span><span>STL</span><span>Multithreading</span><span>Google Test</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/High-Performance-CPP-Order-Matching-Engine" target="_blank">View Code</a>
-        </div>
-      </div>
 
-      <!-- SQL SLM -->
-      <div class="card">
-        <img class="project-thumb" src="SQL SLM.png" style="height:140px;object-fit:contain;background:rgba(0,0,0,0.3);" alt="SQL SLM">
-        <h4>Custom-Trained SQL Small Language Model (10M GPT)</h4>
-        <p class="muted">Sep 2025 – Oct 2025</p>
-        <p>Architected a compact 10M-parameter GPT model from scratch in PyTorch. Implemented mixed-precision and gradient accumulation, reducing per-epoch data loading times by over 90%.</p>
-        <div class="tags">
-          <span>PyTorch</span><span>Transformers</span><span>Mixed-Precision</span><span>10M Params</span>
+        <!-- Credit Risk -->
+        <div class="holo-card">
+          <img class="project-thumb" src="cerdit.png" alt="Credit Risk">
+          <h4>Credit Risk Model</h4>
+          <p>Developed interpretable ML models that improved prediction accuracy by 20% for NBFC clients.</p>
+          <div class="tags"><span>Scikit-learn</span><span>Streamlit</span><span>MLOps</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/Credit-Risk-Modelling-Classification-" target="_blank">GitHub</a></div>
         </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/SQL-Injection-GPT" target="_blank">Source Code</a>
-        </div>
-      </div>
 
-      <!-- RAG -->
-      <div class="card">
-        <img class="project-thumb" src="RAG.png" alt="RAG System">
-        <h4>ContextEngine: RAG System</h4>
-        <p>Built a full RAG pipeline (BM25 + FAISS) boosting grounded accuracy (42%→71%). Optimized inference using vLLM.</p>
-        <div class="tags">
-          <span>RAG</span><span>vLLM</span><span>FAISS</span>
+        <!-- Toxic -->
+        <div class="holo-card">
+          <img class="project-thumb" src="toxic.png" alt="Toxic Message Detector">
+          <h4>Toxic Message Detector</h4>
+          <p>Trained a text classification model with TF-IDF on 100K+ comments, achieving 95% accuracy.</p>
+          <div class="tags"><span>NLTK</span><span>TF-IDF</span><span>Pandas</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/Toxic-Comment-Classification-Web-App" target="_blank">GitHub</a></div>
         </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/ContextEngine-Production-Ready-RAG-System-with-Hybrid-Retrieval" target="_blank">View Code</a>
-        </div>
-      </div>
 
-      <!-- Kafka -->
-      <div class="card">
-        <img class="project-thumb" src="KAFKA.png" alt="Kafka Pipeline">
-        <h4>Real-Time Event Stream</h4>
-        <p>Designed an event-driven pipeline for e-commerce data using asynchronous producers/consumers.</p>
-        <div class="tags">
-          <span>Kafka</span><span>Docker</span><span>Python</span>
+        <!-- Crew AI -->
+        <div class="holo-card">
+          <img class="project-thumb" src="crew.png" alt="Multi-Modal Crew AI">
+          <h4>Multi-Modal Crew AI</h4>
+          <p>Designed a multi-agent framework that automates market research by 70% using specialized 'Researcher' and 'Writer' agents.</p>
+          <div class="tags"><span>Gemini API</span><span>LangChain</span><span>Streamlit</span></div>
+          <div class="project-links"><a href="https://github.com/sumeet1212khatri/CrewAI-Multi-Agent-System-Prototype" target="_blank">GitHub</a></div>
         </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/Real-Time-Event-Stream-Pipeline" target="_blank">View Code</a>
-        </div>
-      </div>
-
-      <!-- Fine-Tuning -->
-      <div class="card">
-        <img class="project-thumb" src="FINE TUNNING.png" alt="Fine Tuning">
-        <h4>Memory-Efficient Fine-Tuning</h4>
-        <p>Implemented a QLoRa (4-bit) pipeline, reducing memory footprint by ~70% on a single T4 GPU.</p>
-        <div class="tags">
-          <span>QLoRa</span><span>LLM</span><span>PyTorch</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/Fine-Tuning-LLM-for-Specialized-Q-A-Bot" target="_blank">View Code</a>
-        </div>
-      </div>
-
-      <!-- Code Buddy -->
-      <div class="card">
-        <img class="project-thumb" src="CODE BUDDY.png" alt="AI Coder Buddy">
-        <h4>AI Coder Buddy</h4>
-        <p>AI agent using LangChain that plans and generates multi-file applications, decreasing development cycle time by 30%.</p>
-        <div class="tags">
-          <span>LangChain</span><span>Groq API</span><span>AI Agents</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/AI-Coder-Buddy" target="_blank">GitHub</a>
-        </div>
-      </div>
-
-      <!-- Credit Risk -->
-      <div class="card">
-        <img class="project-thumb" src="cerdit.png" alt="Credit Risk">
-        <h4>Credit Risk Model</h4>
-        <p>Developed interpretable ML models that improved prediction accuracy by 20% for NBFC clients.</p>
-        <div class="tags">
-          <span>Scikit-learn</span><span>Streamlit</span><span>MLOps</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/Credit-Risk-Modelling-Classification-" target="_blank">GitHub</a>
-        </div>
-      </div>
-
-      <!-- Toxic -->
-      <div class="card">
-        <img class="project-thumb" src="toxic.png" alt="Toxic Message Detector">
-        <h4>Toxic Message Detector</h4>
-        <p>Trained a text classification model with TF-IDF on 100K+ comments, achieving 95% accuracy.</p>
-        <div class="tags">
-          <span>NLTK</span><span>TF-IDF</span><span>Pandas</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/Toxic-Comment-Classification-Web-App" target="_blank">GitHub</a>
-        </div>
-      </div>
-
-      <!-- Crew AI -->
-      <div class="card">
-        <img class="project-thumb" src="crew.png" alt="Multi-Modal Crew AI">
-        <h4>Multi-Modal Crew AI</h4>
-        <p>Designed a multi-agent framework that automates market research by 70% using specialized 'Researcher' and 'Writer' agents.</p>
-        <div class="tags">
-          <span>Gemini API</span><span>LangChain</span><span>Streamlit</span>
-        </div>
-        <div class="project-links">
-          <a href="https://github.com/sumeet1212khatri/CrewAI-Multi-Agent-System-Prototype" target="_blank">GitHub</a>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- VIRTUAL EXPERIENCE -->
-  <section class="last-experience">
-    <h3>Virtual Experience</h3>
-    <div class="project-grid">
-      <div class="card">
-        <img class="project-thumb" src="deloitte-certificate.png" alt="Deloitte">
-        <h4>Virtual Software Internship, Deloitte</h4>
-        <p class="muted">Forage</p>
-        <p>Debugged and refactored a 10k-line Python/SQL codebase. Added connection pooling and regression tests, reducing query failure rate by 40%.</p>
-        <div class="tags"><span>Python</span><span>SQL</span><span>Debugging</span></div>
-      </div>
-      <div class="card">
-        <img class="project-thumb" src="AWS cert.png" alt="AWS">
-        <h4>AWS APAC Solutions Architect</h4>
-        <p class="muted">Forage | 10/2025 – 11/2025</p>
-        <p>Designed a scalable Elastic Beanstalk architecture for a client experiencing growth. Translated technical architecture into cost-benefit analysis.</p>
-        <div class="tags"><span>AWS</span><span>Architecture</span><span>Elastic Beanstalk</span></div>
       </div>
     </div>
-  </section>
+  </div>
+</div>
 
+<div class="modal-overlay" id="overlay-skills">
+  <div class="virtual-window">
+    <div class="window-header">
+      <div class="window-title"><span>❄️</span> SECTOR 05 // TECHNICAL ARSENAL [ICE CRYSTAL]</div>
+      <button class="close-btn" onclick="closeWindows()">✕ DISENGAGE</button>
+    </div>
+    <div class="window-body">
+      <div class="skill-grid">
+        <div class="skill-box">
+          <strong>Languages</strong>
+          <p style="margin:0;color:#e2e8f0;">C++17/20, Python, SQL, JavaScript</p>
+        </div>
+        <div class="skill-box">
+          <strong>Systems</strong>
+          <p style="margin:0;color:#e2e8f0;">Linux, Concurrency, Multithreading, TCP/IP, SIMD/AVX2, OpenMP</p>
+        </div>
+        <div class="skill-box">
+          <strong>DevOps & Cloud</strong>
+          <p style="margin:0;color:#e2e8f0;">Docker, Kafka, GitHub Actions, AWS (EC2), FastAPI</p>
+        </div>
+        <div class="skill-box">
+          <strong>Enterprise</strong>
+          <p style="margin:0;color:#e2e8f0;">jQuery, Dataverse, OData, Power Automate, HTML/CSS</p>
+        </div>
+        <div class="skill-box">
+          <strong>Machine Learning</strong>
+          <p style="margin:0;color:#e2e8f0;">Supervised/Unsupervised Learning, Ensemble Methods, Feature Engineering, Model Evaluation</p>
+        </div>
+        <div class="skill-box">
+          <strong>Deep Learning & GenAI</strong>
+          <p style="margin:0;color:#e2e8f0;">Transformers, CNNs, RNN/LSTM, Transfer Learning, Fine-Tuning, QLoRA</p>
+        </div>
+        <div class="skill-box">
+          <strong>AI Infrastructure</strong>
+          <p style="margin:0;color:#e2e8f0;">PyTorch, Transformers, QLoRA, vLLM, FAISS, LLM Inference</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="overlay-certifications">
+  <div class="virtual-window">
+    <div class="window-header">
+      <div class="window-title"><span>⚡</span> SECTOR 06 // CERTIFICATIONS, VIRTUAL EXP & GOALS [ASTRA]</div>
+      <button class="close-btn" onclick="closeWindows()">✕ DISENGAGE</button>
+    </div>
+    <div class="window-body">
+      <h3 style="color:var(--accent-cyan);">🚀 Future Goals</h3>
+      <div class="holo-card" style="margin-bottom:34px;">
+        <h4>Building RedOpsAI – The Future of Web Security</h4>
+        <p>Over the next six months, my goal is to build RedOpsAI, a SaaS platform that makes website security testing simple and effective. The platform will provide safe and transparent scans, showing live visual feedback of potential risks without causing any harm to the site.</p>
+        <div class="project-links">
+          <a href="https://sumeet1212khatri.github.io/RedOpsAI-Autonomous-Pentesting-Agent/" target="_blank">Live Demo</a>
+          <a href="https://github.com/sumeet1212khatri/RedOpsAI-Autonomous-Pentesting-Agent" target="_blank">Source Code</a>
+        </div>
+      </div>
+
+      <h3 style="color:var(--accent-cyan);margin-bottom:20px;">🏆 Certifications</h3>
+      <div class="cert-list" style="margin-bottom:38px;">
+        <div class="cert-tag">Google DeepMind's AI Research Badge</div>
+        <div class="cert-tag">Google Generative AI Leader</div>
+        <div class="cert-tag">PMI Generative AI for PMs</div>
+        <div class="cert-tag">Data Structures & Algorithms in C++</div>
+        <div class="cert-tag">CodeBasics ML Masterclass</div>
+        <div class="cert-tag">Advanced Deep Learning</div>
+        <div class="cert-tag">McKinsey Forward (Top 1%)</div>
+        <div class="cert-tag">System Design (LLD/HLD)</div>
+      </div>
+
+      <h3 style="color:var(--accent-cyan);margin-bottom:20px;">🌐 Virtual Experience</h3>
+      <div class="project-grid">
+        <div class="holo-card">
+          <img class="project-thumb" src="deloitte-certificate.png" alt="Deloitte">
+          <h4>Virtual Software Internship, Deloitte</h4>
+          <div class="meta-date">Forage</div>
+          <p>Debugged and refactored a 10k-line Python/SQL codebase. Added connection pooling and regression tests, reducing query failure rate by 40%.</p>
+          <div class="tags"><span>Python</span><span>SQL</span><span>Debugging</span></div>
+        </div>
+        <div class="holo-card">
+          <img class="project-thumb" src="AWS cert.png" alt="AWS">
+          <h4>AWS APAC Solutions Architect</h4>
+          <div class="meta-date">Forage | 10/2025 – 11/2025</div>
+          <p>Designed a scalable Elastic Beanstalk architecture for a client experiencing growth. Translated technical architecture into cost-benefit analysis.</p>
+          <div class="tags"><span>AWS</span><span>Architecture</span><span>Elastic Beanstalk</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-/* --- Nav Dots --- */
-(function(){
-  const sections = Array.from(document.querySelectorAll('section'));
-  const dotsContainer = document.querySelector('.nav-dots');
-  if(sections.length > 0 && dotsContainer){
-    sections.forEach((sec, i) => {
-      const btn = document.createElement('button');
-      btn.setAttribute('aria-label', 'Go to section '+(i+1));
-      btn.addEventListener('click', () => sec.scrollIntoView({behavior:'smooth'}));
-      dotsContainer.appendChild(btn);
-    });
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if(entry.isIntersecting){
-          const idx = sections.indexOf(entry.target);
-          Array.from(dotsContainer.children).forEach(b => b.classList.remove('active'));
-          if(dotsContainer.children[idx]) dotsContainer.children[idx].classList.add('active');
-        }
-      });
-    }, {threshold: 0.3});
-    sections.forEach(s => observer.observe(s));
+/* --- Modal Control Logic --- */
+const windows = ['profile', 'experience', 'flagship', 'projects', 'skills', 'certifications'];
+let activeWindow = null;
+let targetPlanetIndex = -1;
+
+function openWindow(id) {
+  closeWindows();
+  const overlay = document.getElementById('overlay-' + id);
+  if (overlay) {
+    overlay.classList.add('open');
+    activeWindow = id;
+    targetPlanetIndex = windows.indexOf(id);
   }
-})();
+}
 
-/* --- Custom Cursor --- */
-(function(){
-  const cursor = document.querySelector('.custom-cursor');
-  document.addEventListener('mousemove', (e) => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top = e.clientY + 'px';
-  });
-  document.querySelectorAll('a, button').forEach(link => {
-    link.addEventListener('mouseenter', () => cursor.classList.add('active'));
-    link.addEventListener('mouseleave', () => cursor.classList.remove('active'));
-  });
-})();
+function closeWindows() {
+  document.querySelectorAll('.modal-overlay').forEach(el => el.classList.remove('open'));
+  activeWindow = null;
+  targetPlanetIndex = -1;
+}
 
-/* --- Three.js Starfield --- */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeWindows();
+});
+
+/* --- Advanced Three.js Interactive Planetary Constellation Engine --- */
 (function(){
   const container = document.getElementById('canvas-container');
+  if(!container || typeof THREE === 'undefined') return;
+  
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   container.appendChild(renderer.domElement);
 
-  const particlesGeometry = new THREE.BufferGeometry();
-  const count = 2000;
-  const posArray = new Float32Array(count * 3);
-  for(let i = 0; i < count * 3; i++) posArray[i] = (Math.random() - 0.5) * 15;
-  particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-  const material = new THREE.PointsMaterial({ size: 0.02, color: 0x6366f1, transparent: true, opacity: 0.8 });
-  const particlesMesh = new THREE.Points(particlesGeometry, material);
-  scene.add(particlesMesh);
-  camera.position.z = 3;
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x332255, 1.2);
+  scene.add(ambientLight);
+  const sunLight = new THREE.PointLight(0xffeedd, 3.0, 100);
+  sunLight.position.set(0, 0, 0);
+  scene.add(sunLight);
+  const dirLight = new THREE.DirectionalLight(0x00f2fe, 1.5);
+  dirLight.position.set(-20, 20, 20);
+  scene.add(dirLight);
 
-  let mouseX = 0, mouseY = 0;
-  document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX / window.innerWidth - 0.5;
-    mouseY = e.clientY / window.innerHeight - 0.5;
+  // Helper: Procedural Planet Canvas Texture Generator
+  function createPlanetTexture(type) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+
+    if (type === 'sun') {
+      const grad = ctx.createLinearGradient(0,0,0,256);
+      grad.addColorStop(0, '#ff9900'); grad.addColorStop(0.5, '#ff3300'); grad.addColorStop(1, '#ffcc00');
+      ctx.fillStyle = grad; ctx.fillRect(0,0,512,256);
+      for(let i=0; i<300; i++) {
+        ctx.fillStyle = `rgba(255, 255, 200, ${Math.random()*0.3})`;
+        ctx.beginPath(); ctx.arc(Math.random()*512, Math.random()*256, Math.random()*15, 0, Math.PI*2); ctx.fill();
+      }
+    } else if (type === 'gas') {
+      for (let y=0; y<256; y+=4) {
+        ctx.fillStyle = `hsl(${270 + Math.sin(y*0.1)*30}, 70%, ${20 + Math.cos(y*0.05)*30}%)`;
+        ctx.fillRect(0, y, 512, 4);
+      }
+    } else if (type === 'magma') {
+      ctx.fillStyle = '#110505'; ctx.fillRect(0,0,512,256);
+      ctx.strokeStyle = '#ff4500'; ctx.lineWidth = 6;
+      for(let i=0; i<15; i++) {
+        ctx.beginPath(); ctx.moveTo(Math.random()*512, Math.random()*256);
+        ctx.bezierCurveTo(Math.random()*512, Math.random()*256, Math.random()*512, Math.random()*256, Math.random()*512, Math.random()*256);
+        ctx.stroke();
+      }
+    } else if (type === 'cyber') {
+      ctx.fillStyle = '#062020'; ctx.fillRect(0,0,512,256);
+      ctx.strokeStyle = '#00f2fe'; ctx.lineWidth = 2;
+      for(let x=0; x<512; x+=32) {
+        for(let y=0; y<256; y+=32) {
+          if(Math.random() > 0.4) ctx.strokeRect(x+2, y+2, 28, 28);
+        }
+      }
+    } else if (type === 'ice') {
+      const grad = ctx.createLinearGradient(0,0,512,256);
+      grad.addColorStop(0, '#a5f3fc'); grad.addColorStop(1, '#0284c7');
+      ctx.fillStyle = grad; ctx.fillRect(0,0,512,256);
+      for(let i=0; i<100; i++) {
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillRect(Math.random()*512, Math.random()*256, Math.random()*20, Math.random()*20);
+      }
+    } else if (type === 'pulsar') {
+      ctx.fillStyle = '#3b0764'; ctx.fillRect(0,0,512,256);
+      const grad = ctx.createRadialGradient(256,128,10,256,128,200);
+      grad.addColorStop(0, '#d946ef'); grad.addColorStop(1, 'transparent');
+      ctx.fillStyle = grad; ctx.fillRect(0,0,512,256);
+    }
+    return new THREE.CanvasTexture(canvas);
+  }
+
+  // Create 6 Planets
+  const planets = [];
+  const planetConfigs = [
+    { type: 'sun', radius: 1.4, pos: [0, 0, 0], glow: 0xffaa00, name: 'profile' },
+    { type: 'gas', radius: 1.1, pos: [-6.5, 1.8, -2], ring: true, glow: 0x8b5cf6, name: 'experience' },
+    { type: 'magma', radius: 1.0, pos: [6.0, -1.8, -1.5], glow: 0xff3300, name: 'flagship' },
+    { type: 'cyber', radius: 1.05, pos: [-4.2, -3.0, 2.5], glow: 0x00f2fe, name: 'projects' },
+    { type: 'ice', radius: 0.95, pos: [5.0, 2.5, 2.0], glow: 0x38bdf8, name: 'skills' },
+    { type: 'pulsar', radius: 0.9, pos: [0, 4.2, -4.5], moon: true, glow: 0xd946ef, name: 'certifications' }
+  ];
+
+  const sphereGeo = new THREE.SphereGeometry(1, 32, 32);
+  planetConfigs.forEach((cfg, idx) => {
+    const mat = new THREE.MeshStandardMaterial({
+      map: createPlanetTexture(cfg.type),
+      roughness: cfg.type === 'sun' ? 0.1 : 0.5,
+      metalness: cfg.type === 'cyber' ? 0.8 : 0.2,
+      emissive: cfg.type === 'sun' ? 0xff5500 : (cfg.type === 'magma' ? 0x440500 : 0x000000),
+      emissiveIntensity: 0.5
+    });
+    const mesh = new THREE.Mesh(sphereGeo, mat);
+    mesh.scale.set(cfg.radius, cfg.radius, cfg.radius);
+    mesh.position.set(...cfg.pos);
+    mesh.userData = { index: idx, id: cfg.name };
+    scene.add(mesh);
+    planets.push(mesh);
+
+    // Planetary Ring (Kronos)
+    if (cfg.ring) {
+      const ringGeo = new THREE.RingGeometry(cfg.radius * 1.4, cfg.radius * 2.3, 64);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xc084fc, side: THREE.DoubleSide, transparent: true, opacity: 0.65 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2.5; ring.rotation.y = 0.3;
+      mesh.add(ring);
+    }
+
+    // Orbiting Moon (Astra)
+    if (cfg.moon) {
+      const moonMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.8 });
+      const moon = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), moonMat);
+      moon.position.set(cfg.radius * 2.2, 0, 0);
+      mesh.add(moon);
+      mesh.userData.moon = moon;
+    }
   });
+
+  // Background Starfield Particles
+  const starsCount = 2500;
+  const starsGeo = new THREE.BufferGeometry();
+  const starsPos = new Float32Array(starsCount * 3);
+  for(let i=0; i<starsCount*3; i+=3) {
+    starsPos[i] = (Math.random() - 0.5) * 60;
+    starsPos[i+1] = (Math.random() - 0.5) * 60;
+    starsPos[i+2] = (Math.random() - 0.5) * 50 - 10;
+  }
+  starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+  const starsMat = new THREE.PointsMaterial({ size: 0.08, color: 0xffffff, transparent: true, opacity: 0.85 });
+  const starfield = new THREE.Points(starsGeo, starsMat);
+  scene.add(starfield);
+
+  // Camera settings
+  camera.position.set(0, 0, 14);
+  let camTargetX = 0, camTargetY = 0, camTargetZ = 14;
+  let isDragging = false;
+  let previousMousePosition = { x: 0, y: 0 };
+  let orbitAngleX = 0, orbitAngleY = 0;
+
+  document.addEventListener('mousedown', (e) => {
+    if(e.target.closest('.modal-overlay.open') || e.target.closest('.orbital-dock') || e.target.closest('.planet-hud')) return;
+    isDragging = true;
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if(!isDragging) return;
+    const deltaX = e.clientX - previousMousePosition.x;
+    const deltaY = e.clientY - previousMousePosition.y;
+    orbitAngleX -= deltaX * 0.005;
+    orbitAngleY += deltaY * 0.005;
+    orbitAngleY = Math.max(-0.6, Math.min(0.6, orbitAngleY));
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  });
+
+  document.addEventListener('mouseup', () => { isDragging = false; });
+  document.addEventListener('mouseleave', () => { isDragging = false; });
+
+  // Raycaster for clicking planets in 3D
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  window.addEventListener('click', (e) => {
+    if(e.target.closest('.modal-overlay.open') || e.target.closest('.orbital-dock') || e.target.closest('.planet-hud') || isDragging) return;
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(planets);
+    if (intersects.length > 0) {
+      const selected = intersects[0].object;
+      openWindow(selected.userData.id);
+    }
+  });
+
+  const clock = new THREE.Clock();
+  const tempVec = new THREE.Vector3();
+
+  // Animation & Projection Loop
   const animate = () => {
     requestAnimationFrame(animate);
-    particlesMesh.rotation.y += 0.001;
-    particlesMesh.rotation.x += 0.0005;
-    particlesMesh.rotation.x += mouseY * 0.05;
-    particlesMesh.rotation.y += mouseX * 0.05;
+    const elapsed = clock.getElapsedTime();
+
+    // Planet axis & atmosphere rotation
+    planets.forEach((p, idx) => {
+      p.rotation.y += 0.005 + (idx * 0.002);
+      if (p.userData.moon) {
+        p.userData.moon.position.x = Math.cos(elapsed * 2) * 2.2;
+        p.userData.moon.position.z = Math.sin(elapsed * 2) * 2.2;
+      }
+    });
+
+    starfield.rotation.y = elapsed * 0.02;
+
+    // Smooth Camera Orbital Mechanics or Zoom Transition
+    if (targetPlanetIndex !== -1) {
+      // Zoom toward target planet when window opens
+      const targetPlanet = planets[targetPlanetIndex];
+      camTargetX = targetPlanet.position.x * 0.5;
+      camTargetY = targetPlanet.position.y * 0.5;
+      camTargetZ = 9;
+    } else {
+      // System panoramic orbital view
+      camTargetX = Math.sin(orbitAngleX) * 14;
+      camTargetY = Math.sin(orbitAngleY) * 6;
+      camTargetZ = Math.cos(orbitAngleX) * 14;
+    }
+
+    camera.position.x += (camTargetX - camera.position.x) * 0.06;
+    camera.position.y += (camTargetY - camera.position.y) * 0.06;
+    camera.position.z += (camTargetZ - camera.position.z) * 0.06;
+    camera.lookAt(0, 0, 0);
+
+    // Sync 2D HUD Labels with 3D Projected Planet Coordinates
+    planets.forEach((p, idx) => {
+      const hudEl = document.getElementById('hud-' + idx);
+      if (!hudEl) return;
+      tempVec.copy(p.position);
+      tempVec.y += (planetConfigs[idx].radius + 0.35); // Above planet sphere
+      tempVec.project(camera);
+
+      // Convert device normalized coordinates to screen pixel positions
+      const screenX = (tempVec.x *  .5 + .5) * window.innerWidth;
+      const screenY = (tempVec.y * -.5 + .5) * window.innerHeight;
+      
+      // Check if behind camera
+      if (tempVec.z > 1 || screenX < 0 || screenX > window.innerWidth || screenY < 0 || screenY > window.innerHeight) {
+        hudEl.style.display = 'none';
+      } else {
+        hudEl.style.display = 'flex';
+        hudEl.style.left = screenX + 'px';
+        hudEl.style.top = screenY + 'px';
+      }
+    });
+
     renderer.render(scene, camera);
   };
   animate();
+
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
